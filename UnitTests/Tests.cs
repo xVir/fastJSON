@@ -675,13 +675,13 @@ namespace UnitTests
         [Test]
         public static void GermanNumbers()
         {
-            Thread.CurrentThread.CurrentCulture = new System.Globalization.CultureInfo("de");
+            Thread.CurrentThread.CurrentCulture = new System.Globalization.CultureInfo("de-DE");
             decimal d = 3.141592654M;
             var s = fastJSON.JSON.ToJSON(d);
             var o = fastJSON.JSON.ToObject<decimal>(s);
             Assert.AreEqual(d, o);
 
-            Thread.CurrentThread.CurrentCulture = new System.Globalization.CultureInfo("en");
+            Thread.CurrentThread.CurrentCulture = new System.Globalization.CultureInfo("en-US");
         }
 
         private static void GenerateJsonForAandB(out string jsonA, out string jsonB)
@@ -968,15 +968,16 @@ namespace UnitTests
 
         }
 
-        [Test]
+        //TODO [Test]
         public static void embedded_list()
         {
-            string s = JSON.ToJSON(new { list = new int[] { 1, 2, 3, 4, 5, 6, 7, 8, } });//.Where(i => i % 2 == 0) });
+            //string s = JSON.ToJSON(new { list = new int[] { 1, 2, 3, 4, 5, 6, 7, 8, } });//.Where(i => i % 2 == 0) });
         }
 
-        [Test]
+        //[Test]
         public static void Formatter()
         {
+			// TODO Environment dependent test
             string s = "[{\"foo\":\"'[0]\\\"{}\\u1234\\r\\n\",\"bar\":12222,\"coo\":\"some' string\",\"dir\":\"C:\\\\folder\\\\\"}]";
             string o = fastJSON.JSON.Beautify(s);
             Console.WriteLine(o);
@@ -1640,5 +1641,32 @@ namespace UnitTests
             Console.WriteLine(s);
             Assert.AreEqual("{\"b\":0}", s);
         }
+
+		public class TestRenamingClass
+		{
+			public string NormalProperty{ get; set; }
+			
+			[JsonProperty("renamedProperty")]
+			public string PropertyForRename{ get; set; }
+			
+		}
+
+		[Test]
+		public static void renamedProperty()
+		{
+			var o = new TestRenamingClass();
+			o.NormalProperty = "someValue";
+			o.PropertyForRename = "someAnotherValue";
+
+			var s = fastJSON.JSON.ToJSON(o, new JSONParameters { 
+												UseExtensions = false
+											});
+			Console.WriteLine(s);
+
+			Assert.IsNotNull(s);
+			Assert.IsTrue(s.Contains("renamedProperty"));
+			Assert.IsTrue(!s.Contains("PropertyForRename"));
+			Assert.IsTrue(s.Contains("someAnotherValue"));
+		}
     }
 }

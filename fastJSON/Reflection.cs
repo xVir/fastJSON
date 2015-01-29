@@ -4,6 +4,8 @@ using System.Text;
 using System.Reflection.Emit;
 using System.Reflection;
 using System.Collections;
+using System.Linq;
+
 #if !SILVERLIGHT
 using System.Data;
 #endif
@@ -508,9 +510,22 @@ namespace fastJSON
                     if (found)
                         continue;
                 }
+
+				var propertyName = p.Name;
+
+				if (p.IsDefined(typeof(JsonPropertyAttribute), false)) {
+					var attr = p.GetCustomAttributes(typeof(JsonPropertyAttribute), false)[0] as JsonPropertyAttribute;
+					if (!string.IsNullOrEmpty(attr.PropertyName)) {
+						 propertyName = attr.PropertyName;
+					}
+				}
+
                 GenericGetter g = CreateGetMethod(type, p);
-                if (g != null)
-                    getters.Add(new Getters { Getter = g, Name = p.Name, lcName = p.Name.ToLower() });
+                
+				if (g != null)
+				{
+					getters.Add(new Getters { Getter = g, Name = propertyName, lcName = propertyName.ToLower() });
+				}
             }
 
             FieldInfo[] fi = type.GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.Static);
