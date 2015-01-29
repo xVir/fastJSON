@@ -3,3 +3,9 @@ output
 UnitTests/bin
 UnitTests/test-results
 test-results
+fastJSON/obj
+fastJSON/bin
+UnitTests/obj
+Consoletest/obj
+consoletest.userprefs
+*.suo

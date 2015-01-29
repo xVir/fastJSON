@@ -1658,15 +1658,21 @@ namespace UnitTests
 			o.NormalProperty = "someValue";
 			o.PropertyForRename = "someAnotherValue";
 
-			var s = fastJSON.JSON.ToJSON(o, new JSONParameters { 
+			var jsonString = fastJSON.JSON.ToJSON(o, new JSONParameters { 
 												UseExtensions = false
 											});
-			Console.WriteLine(s);
+			Console.WriteLine(jsonString);
 
-			Assert.IsNotNull(s);
-			Assert.IsTrue(s.Contains("renamedProperty"));
-			Assert.IsTrue(!s.Contains("PropertyForRename"));
-			Assert.IsTrue(s.Contains("someAnotherValue"));
+			Assert.IsNotNull(jsonString);
+			Assert.IsTrue(jsonString.Contains("renamedProperty"));
+			Assert.IsTrue(!jsonString.Contains("PropertyForRename"));
+			Assert.IsTrue(jsonString.Contains("someAnotherValue"));
+
+			var loaded = fastJSON.JSON.ToObject<TestRenamingClass>(jsonString);
+
+			Assert.AreEqual("someValue", loaded.NormalProperty);
+			Assert.AreEqual("someAnotherValue", loaded.PropertyForRename);
+
 		}
     }
 }

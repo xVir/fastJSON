@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Reflection.Emit;
@@ -163,24 +163,25 @@ namespace fastJSON
                     {// Property is an indexer
                         continue;
                     }
-                    myPropInfo d = CreateMyProp(p.PropertyType, p.Name, customType);
+
+					myPropInfo d = CreateMyProp(p, p.PropertyType, p.Name, customType);
                     d.setter = Reflection.CreateSetMethod(type, p);
                     if (d.setter != null)
                         d.CanWrite = true;
                     d.getter = Reflection.CreateGetMethod(type, p);
-                    sd.Add(p.Name.ToLower(), d);
+                    sd.Add(d.Name.ToLower(), d);
                 }
                 FieldInfo[] fi = type.GetFields(BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static);
                 foreach (FieldInfo f in fi)
                 {
-                    myPropInfo d = CreateMyProp(f.FieldType, f.Name, customType);
+                    myPropInfo d = CreateMyProp(f, f.FieldType, f.Name, customType);
                     if (f.IsLiteral == false)
                     {
                         d.setter = Reflection.CreateSetField(type, f);
                         if (d.setter != null)
                             d.CanWrite = true;
                         d.getter = Reflection.CreateGetField(type, f);
-                        sd.Add(f.Name.ToLower(), d);
+                        sd.Add(d.Name.ToLower(), d);
                     }
                 }
 
@@ -189,7 +190,7 @@ namespace fastJSON
             }
         }
 
-        private myPropInfo CreateMyProp(Type t, string name, bool customType)
+        private myPropInfo CreateMyProp(MemberInfo memberInfo, Type t, string name, bool customType)
         {
             myPropInfo d = new myPropInfo();
             myPropInfoType d_type = myPropInfoType.Unknown;
@@ -238,8 +239,16 @@ namespace fastJSON
                 d.bt = t.GetGenericArguments()[0];
             }
 
+			var jsonName = name;
+			if (memberInfo.IsDefined(typeof(JsonPropertyAttribute), false)) {
+				var attr = memberInfo.GetCustomAttributes(typeof(JsonPropertyAttribute), false)[0] as JsonPropertyAttribute;
+				if (!string.IsNullOrEmpty(attr.PropertyName)) {
+					jsonName = attr.PropertyName;
+				}
+			}
+
             d.pt = t;
-            d.Name = name;
+            d.Name = jsonName;
             d.changeType = GetChangeType(t);
             d.Type = d_type;
 
