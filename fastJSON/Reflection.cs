@@ -81,6 +81,8 @@ namespace fastJSON
         internal delegate object GenericGetter(object obj);
         private delegate object CreateObject();
 
+		private JSONParameters parameters;
+
         private SafeDictionary<Type, string> _tyname = new SafeDictionary<Type, string>();
         private SafeDictionary<string, Type> _typecache = new SafeDictionary<string, Type>();
         private SafeDictionary<Type, CreateObject> _constrcache = new SafeDictionary<Type, CreateObject>();
@@ -146,6 +148,11 @@ namespace fastJSON
             }
         }
 
+		internal void SetParameters(JSONParameters p)
+		{
+			parameters = p;
+		}
+
         public Dictionary<string, myPropInfo> Getproperties(Type type, string typename, bool customType)
         {
             Dictionary<string, myPropInfo> sd = null;
@@ -165,10 +172,10 @@ namespace fastJSON
                     }
 
 					myPropInfo d = CreateMyProp(p, p.PropertyType, p.Name, customType);
-                    d.setter = Reflection.CreateSetMethod(type, p);
+                    d.setter = CreateSetMethod(type, p);
                     if (d.setter != null)
                         d.CanWrite = true;
-                    d.getter = Reflection.CreateGetMethod(type, p);
+                    d.getter = CreateGetMethod(type, p);
                     sd.Add(d.Name.ToLower(), d);
                 }
                 FieldInfo[] fi = type.GetFields(BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static);
@@ -177,10 +184,10 @@ namespace fastJSON
                     myPropInfo d = CreateMyProp(f, f.FieldType, f.Name, customType);
                     if (f.IsLiteral == false)
                     {
-                        d.setter = Reflection.CreateSetField(type, f);
+                        d.setter = CreateSetField(type, f);
                         if (d.setter != null)
                             d.CanWrite = true;
-                        d.getter = Reflection.CreateGetField(type, f);
+                        d.getter = CreateGetField(type, f);
                         sd.Add(d.Name.ToLower(), d);
                     }
                 }
@@ -308,28 +315,39 @@ namespace fastJSON
                 }
                 else
                 {
-                    if (objtype.IsClass)
-                    {
-                        DynamicMethod dynMethod = new DynamicMethod("_", objtype, null);
-                        ILGenerator ilGen = dynMethod.GetILGenerator();
-                        ilGen.Emit(OpCodes.Newobj, objtype.GetConstructor(Type.EmptyTypes));
-                        ilGen.Emit(OpCodes.Ret);
-                        c = (CreateObject)dynMethod.CreateDelegate(typeof(CreateObject));
-                        _constrcache.Add(objtype, c);
-                    }
-                    else // structs
-                    {
-                        DynamicMethod dynMethod = new DynamicMethod("_", typeof(object), null);
-                        ILGenerator ilGen = dynMethod.GetILGenerator();
-                        var lv = ilGen.DeclareLocal(objtype);
-                        ilGen.Emit(OpCodes.Ldloca_S, lv);
-                        ilGen.Emit(OpCodes.Initobj, objtype);
-                        ilGen.Emit(OpCodes.Ldloc_0);
-                        ilGen.Emit(OpCodes.Box, objtype);
-                        ilGen.Emit(OpCodes.Ret);
-                        c = (CreateObject)dynMethod.CreateDelegate(typeof(CreateObject));
-                        _constrcache.Add(objtype, c);
-                    }
+					if (parameters.WithoutDynamicMethodsGeneration) {
+						c = () => {
+							var instance = Activator.CreateInstance(objtype);
+							return instance;
+						};
+						_constrcache.Add(objtype, c);
+					}
+					else 
+					{
+	                    if (objtype.IsClass)
+	                    {
+	                        DynamicMethod dynMethod = new DynamicMethod("_", objtype, null);
+	                        ILGenerator ilGen = dynMethod.GetILGenerator();
+	                        ilGen.Emit(OpCodes.Newobj, objtype.GetConstructor(Type.EmptyTypes));
+	                        ilGen.Emit(OpCodes.Ret);
+	                        c = (CreateObject)dynMethod.CreateDelegate(typeof(CreateObject));
+	                        _constrcache.Add(objtype, c);
+	                    }
+	                    else // structs
+	                    {
+	                        DynamicMethod dynMethod = new DynamicMethod("_", typeof(object), null);
+	                        ILGenerator ilGen = dynMethod.GetILGenerator();
+	                        var lv = ilGen.DeclareLocal(objtype);
+	                        ilGen.Emit(OpCodes.Ldloca_S, lv);
+	                        ilGen.Emit(OpCodes.Initobj, objtype);
+	                        ilGen.Emit(OpCodes.Ldloc_0);
+	                        ilGen.Emit(OpCodes.Box, objtype);
+	                        ilGen.Emit(OpCodes.Ret);
+	                        c = (CreateObject)dynMethod.CreateDelegate(typeof(CreateObject));
+	                        _constrcache.Add(objtype, c);
+	                    }
+					}
+
                     return c();
                 }
             }
@@ -340,154 +358,195 @@ namespace fastJSON
             }
         }
 
-        internal static GenericSetter CreateSetField(Type type, FieldInfo fieldInfo)
+        internal GenericSetter CreateSetField(Type type, FieldInfo fieldInfo)
         {
-            Type[] arguments = new Type[2];
-            arguments[0] = arguments[1] = typeof(object);
-
-            DynamicMethod dynamicSet = new DynamicMethod("_", typeof(object), arguments, type);
-
-            ILGenerator il = dynamicSet.GetILGenerator();
-
-            if (!type.IsClass) // structs
-            {
-                var lv = il.DeclareLocal(type);
-                il.Emit(OpCodes.Ldarg_0);
-                il.Emit(OpCodes.Unbox_Any, type);
-                il.Emit(OpCodes.Stloc_0);
-                il.Emit(OpCodes.Ldloca_S, lv);
-                il.Emit(OpCodes.Ldarg_1);
-                if (fieldInfo.FieldType.IsClass)
-                    il.Emit(OpCodes.Castclass, fieldInfo.FieldType);
-                else
-                    il.Emit(OpCodes.Unbox_Any, fieldInfo.FieldType);
-                il.Emit(OpCodes.Stfld, fieldInfo);
-                il.Emit(OpCodes.Ldloc_0);
-                il.Emit(OpCodes.Box, type);
-                il.Emit(OpCodes.Ret);
-            }
-            else
-            {
-                il.Emit(OpCodes.Ldarg_0);
-                il.Emit(OpCodes.Ldarg_1);
-                if (fieldInfo.FieldType.IsValueType)
-                    il.Emit(OpCodes.Unbox_Any, fieldInfo.FieldType);
-                il.Emit(OpCodes.Stfld, fieldInfo);
-                il.Emit(OpCodes.Ldarg_0);
-                il.Emit(OpCodes.Ret);
-            }
-            return (GenericSetter)dynamicSet.CreateDelegate(typeof(GenericSetter));
+           
+			if (parameters.WithoutDynamicMethodsGeneration) 
+			{
+				return (target, val) =>
+				{
+					fieldInfo.SetValue(target, val);
+					return target;
+				};	
+   			}
+			else
+			{
+				Type[] arguments = new Type[2];
+				arguments[0] = arguments[1] = typeof(object);
+				
+				DynamicMethod dynamicSet = new DynamicMethod("_", typeof(object), arguments, type);
+				
+				ILGenerator il = dynamicSet.GetILGenerator();
+				
+				if (!type.IsClass) // structs
+				{
+					var lv = il.DeclareLocal(type);
+					il.Emit(OpCodes.Ldarg_0);
+					il.Emit(OpCodes.Unbox_Any, type);
+					il.Emit(OpCodes.Stloc_0);
+					il.Emit(OpCodes.Ldloca_S, lv);
+					il.Emit(OpCodes.Ldarg_1);
+					if (fieldInfo.FieldType.IsClass)
+						il.Emit(OpCodes.Castclass, fieldInfo.FieldType);
+					else
+						il.Emit(OpCodes.Unbox_Any, fieldInfo.FieldType);
+					il.Emit(OpCodes.Stfld, fieldInfo);
+					il.Emit(OpCodes.Ldloc_0);
+					il.Emit(OpCodes.Box, type);
+					il.Emit(OpCodes.Ret);
+				}
+				else
+				{
+					il.Emit(OpCodes.Ldarg_0);
+					il.Emit(OpCodes.Ldarg_1);
+					if (fieldInfo.FieldType.IsValueType)
+						il.Emit(OpCodes.Unbox_Any, fieldInfo.FieldType);
+					il.Emit(OpCodes.Stfld, fieldInfo);
+					il.Emit(OpCodes.Ldarg_0);
+					il.Emit(OpCodes.Ret);
+				}
+				return (GenericSetter)dynamicSet.CreateDelegate(typeof(GenericSetter));
+			}
         }
 
-        internal static GenericSetter CreateSetMethod(Type type, PropertyInfo propertyInfo)
+        internal GenericSetter CreateSetMethod(Type type, PropertyInfo propertyInfo)
         {
             MethodInfo setMethod = propertyInfo.GetSetMethod();
             if (setMethod == null)
-                return null;
+			{
+				return null;
+			}
 
-            Type[] arguments = new Type[2];
-            arguments[0] = arguments[1] = typeof(object);
-
-            DynamicMethod setter = new DynamicMethod("_", typeof(object), arguments);
-            ILGenerator il = setter.GetILGenerator();
-
-            if (!type.IsClass) // structs
-            {
-                var lv = il.DeclareLocal(type);
-                il.Emit(OpCodes.Ldarg_0);
-                il.Emit(OpCodes.Unbox_Any, type);
-                il.Emit(OpCodes.Stloc_0);
-                il.Emit(OpCodes.Ldloca_S, lv);
-                il.Emit(OpCodes.Ldarg_1);
-                if (propertyInfo.PropertyType.IsClass)
-                    il.Emit(OpCodes.Castclass, propertyInfo.PropertyType);
-                else
-                    il.Emit(OpCodes.Unbox_Any, propertyInfo.PropertyType);
-                il.EmitCall(OpCodes.Call, setMethod, null);
-                il.Emit(OpCodes.Ldloc_0);
-                il.Emit(OpCodes.Box, type);
-            }
-            else
-            {
-                il.Emit(OpCodes.Ldarg_0);
-                il.Emit(OpCodes.Castclass, propertyInfo.DeclaringType);
-                il.Emit(OpCodes.Ldarg_1);
-                if (propertyInfo.PropertyType.IsClass)
-                    il.Emit(OpCodes.Castclass, propertyInfo.PropertyType);
-                else
-                    il.Emit(OpCodes.Unbox_Any, propertyInfo.PropertyType);
-                il.EmitCall(OpCodes.Callvirt, setMethod, null);
-                il.Emit(OpCodes.Ldarg_0);
-            }
-
-            il.Emit(OpCodes.Ret);
-
-            return (GenericSetter)setter.CreateDelegate(typeof(GenericSetter));
+			if(parameters.WithoutDynamicMethodsGeneration)
+			{
+				return (target, val) =>
+				{
+					propertyInfo.SetValue(target, val, null);
+					return target;
+				};
+			}
+			else
+			{
+	            Type[] arguments = new Type[2];
+	            arguments[0] = arguments[1] = typeof(object);
+	
+	            DynamicMethod setter = new DynamicMethod("_", typeof(object), arguments);
+	            ILGenerator il = setter.GetILGenerator();
+	
+	            if (!type.IsClass) // structs
+	            {
+	                var lv = il.DeclareLocal(type);
+	                il.Emit(OpCodes.Ldarg_0);
+	                il.Emit(OpCodes.Unbox_Any, type);
+	                il.Emit(OpCodes.Stloc_0);
+	                il.Emit(OpCodes.Ldloca_S, lv);
+	                il.Emit(OpCodes.Ldarg_1);
+	                if (propertyInfo.PropertyType.IsClass)
+	                    il.Emit(OpCodes.Castclass, propertyInfo.PropertyType);
+	                else
+	                    il.Emit(OpCodes.Unbox_Any, propertyInfo.PropertyType);
+	                il.EmitCall(OpCodes.Call, setMethod, null);
+	                il.Emit(OpCodes.Ldloc_0);
+	                il.Emit(OpCodes.Box, type);
+	            }
+	            else
+	            {
+	                il.Emit(OpCodes.Ldarg_0);
+	                il.Emit(OpCodes.Castclass, propertyInfo.DeclaringType);
+	                il.Emit(OpCodes.Ldarg_1);
+	                if (propertyInfo.PropertyType.IsClass)
+	                    il.Emit(OpCodes.Castclass, propertyInfo.PropertyType);
+	                else
+	                    il.Emit(OpCodes.Unbox_Any, propertyInfo.PropertyType);
+	                il.EmitCall(OpCodes.Callvirt, setMethod, null);
+	                il.Emit(OpCodes.Ldarg_0);
+	            }
+	
+	            il.Emit(OpCodes.Ret);
+	
+	            return (GenericSetter)setter.CreateDelegate(typeof(GenericSetter));
+			}
         }
 
-        internal static GenericGetter CreateGetField(Type type, FieldInfo fieldInfo)
+        internal GenericGetter CreateGetField(Type type, FieldInfo fieldInfo)
         {
-            DynamicMethod dynamicGet = new DynamicMethod("_", typeof(object), new Type[] { typeof(object) }, type);
-
-            ILGenerator il = dynamicGet.GetILGenerator();
-
-            if (!type.IsClass) // structs
-            {
-                var lv = il.DeclareLocal(type);
-                il.Emit(OpCodes.Ldarg_0);
-                il.Emit(OpCodes.Unbox_Any, type);
-                il.Emit(OpCodes.Stloc_0);
-                il.Emit(OpCodes.Ldloca_S, lv);
-                il.Emit(OpCodes.Ldfld, fieldInfo);
-                if (fieldInfo.FieldType.IsValueType)
-                    il.Emit(OpCodes.Box, fieldInfo.FieldType);
-            }
-            else
-            {
-                il.Emit(OpCodes.Ldarg_0);
-                il.Emit(OpCodes.Ldfld, fieldInfo);
-                if (fieldInfo.FieldType.IsValueType)
-                    il.Emit(OpCodes.Box, fieldInfo.FieldType);
-            }
-
-            il.Emit(OpCodes.Ret);
-
-            return (GenericGetter)dynamicGet.CreateDelegate(typeof(GenericGetter));
+			if (parameters.WithoutDynamicMethodsGeneration) 
+			{
+				return (o) => { return fieldInfo.GetValue(o); };
+   			}
+			else
+			{
+	            DynamicMethod dynamicGet = new DynamicMethod("_", typeof(object), new Type[] { typeof(object) }, type);
+	
+	            ILGenerator il = dynamicGet.GetILGenerator();
+	
+	            if (!type.IsClass) // structs
+	            {
+	                var lv = il.DeclareLocal(type);
+	                il.Emit(OpCodes.Ldarg_0);
+	                il.Emit(OpCodes.Unbox_Any, type);
+	                il.Emit(OpCodes.Stloc_0);
+	                il.Emit(OpCodes.Ldloca_S, lv);
+	                il.Emit(OpCodes.Ldfld, fieldInfo);
+	                if (fieldInfo.FieldType.IsValueType)
+	                    il.Emit(OpCodes.Box, fieldInfo.FieldType);
+	            }
+	            else
+	            {
+	                il.Emit(OpCodes.Ldarg_0);
+	                il.Emit(OpCodes.Ldfld, fieldInfo);
+	                if (fieldInfo.FieldType.IsValueType)
+	                    il.Emit(OpCodes.Box, fieldInfo.FieldType);
+	            }
+	
+	            il.Emit(OpCodes.Ret);
+	
+	            return (GenericGetter)dynamicGet.CreateDelegate(typeof(GenericGetter));
+			}
         }
 
-        internal static GenericGetter CreateGetMethod(Type type, PropertyInfo propertyInfo)
+        internal GenericGetter CreateGetMethod(Type type, PropertyInfo propertyInfo)
         {
             MethodInfo getMethod = propertyInfo.GetGetMethod();
             if (getMethod == null)
-                return null;
+			{
+				return null;
+			}
 
-            DynamicMethod getter = new DynamicMethod("_", typeof(object), new Type[] { typeof(object) }, type);
-
-            ILGenerator il = getter.GetILGenerator();
-
-            if (!type.IsClass) // structs
-            {
-                var lv = il.DeclareLocal(type);
-                il.Emit(OpCodes.Ldarg_0);
-                il.Emit(OpCodes.Unbox_Any, type);
-                il.Emit(OpCodes.Stloc_0);
-                il.Emit(OpCodes.Ldloca_S, lv);
-                il.EmitCall(OpCodes.Call, getMethod, null);
-                if (propertyInfo.PropertyType.IsValueType)
-                    il.Emit(OpCodes.Box, propertyInfo.PropertyType);
-            }
-            else
-            {
-                il.Emit(OpCodes.Ldarg_0);
-                il.Emit(OpCodes.Castclass, propertyInfo.DeclaringType);
-                il.EmitCall(OpCodes.Callvirt, getMethod, null);
-                if (propertyInfo.PropertyType.IsValueType)
-                    il.Emit(OpCodes.Box, propertyInfo.PropertyType);
-            }
-
-            il.Emit(OpCodes.Ret);
-
-            return (GenericGetter)getter.CreateDelegate(typeof(GenericGetter));
+			if (parameters.WithoutDynamicMethodsGeneration) 
+			{
+				return (o) => { return getMethod.Invoke(o, null); };
+   			}
+			else
+			{
+	            DynamicMethod getter = new DynamicMethod("_", typeof(object), new Type[] { typeof(object) }, type);
+	
+	            ILGenerator il = getter.GetILGenerator();
+	
+	            if (!type.IsClass) // structs
+	            {
+	                var lv = il.DeclareLocal(type);
+	                il.Emit(OpCodes.Ldarg_0);
+	                il.Emit(OpCodes.Unbox_Any, type);
+	                il.Emit(OpCodes.Stloc_0);
+	                il.Emit(OpCodes.Ldloca_S, lv);
+	                il.EmitCall(OpCodes.Call, getMethod, null);
+	                if (propertyInfo.PropertyType.IsValueType)
+	                    il.Emit(OpCodes.Box, propertyInfo.PropertyType);
+	            }
+	            else
+	            {
+	                il.Emit(OpCodes.Ldarg_0);
+	                il.Emit(OpCodes.Castclass, propertyInfo.DeclaringType);
+	                il.EmitCall(OpCodes.Callvirt, getMethod, null);
+	                if (propertyInfo.PropertyType.IsValueType)
+	                    il.Emit(OpCodes.Box, propertyInfo.PropertyType);
+	            }
+	
+	            il.Emit(OpCodes.Ret);
+	
+	            return (GenericGetter)getter.CreateDelegate(typeof(GenericGetter));
+			}
         }
 
         internal Getters[] GetGetters(Type type, bool ShowReadOnlyProperties, List<Type> IgnoreAttributes)//JSONParameters param)

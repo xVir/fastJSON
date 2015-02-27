@@ -92,6 +92,10 @@ namespace fastJSON
         /// Save property/field names as lowercase (default = false)
         /// </summary>
         public bool SerializeToLowerCaseNames = false;
+		/// <summary>
+		/// Don't use ILGenerator for creating properties and fields access methods
+		/// </summary>
+		public bool WithoutDynamicMethodsGeneration = false;
 
         public void FixValues()
         {
@@ -141,6 +145,9 @@ namespace fastJSON
         public static string ToJSON(object obj, JSONParameters param)
         {
             param.FixValues();
+
+			Reflection.Instance.SetParameters(param);
+
             Type t = null;
 
             if (obj == null)
@@ -355,6 +362,8 @@ namespace fastJSON
             if (t == typeof(Dictionary<,>) || t == typeof(List<>))
                 _params.UsingGlobalTypes = false;
             _usingglobals = _params.UsingGlobalTypes;
+
+			Reflection.Instance.SetParameters(_params);
 
             object o = new JsonParser(json).Decode();
             if (o == null)
