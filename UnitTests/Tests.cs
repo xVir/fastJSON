@@ -291,7 +291,7 @@ namespace UnitTests
         [TestFixtureSetUp]
         public static void setup()
         {
-            //fastJSON.JSON.Parameters = new JSONParameters();
+          
         }
 
         [Test]
@@ -303,8 +303,10 @@ namespace UnitTests
         }
 
         [Test]
-        public static void ClassTest()
+        public static void ClassTest([Values(true, false)] bool withoutDynamic)
         {
+			fastJSON.JSON.Parameters = new JSONParameters { WithoutDynamicMethodsGeneration = withoutDynamic };
+
             Retclass r = new Retclass();
             r.Name = "hello";
             r.Field1 = "dsasdF";
@@ -323,8 +325,10 @@ namespace UnitTests
 
 
         [Test]
-        public static void StructTest()
+		public static void StructTest([Values(true, false)] bool withoutDynamic)
         {
+			fastJSON.JSON.Parameters = new JSONParameters { WithoutDynamicMethodsGeneration = withoutDynamic };
+
             Retstruct r = new Retstruct();
             r.Name = "hello";
             r.Field1 = "dsasdF";
@@ -342,8 +346,10 @@ namespace UnitTests
         }
 
         [Test]
-        public static void ParseTest()
+		public static void ParseTest([Values(true, false)] bool withoutDynamic)
         {
+			fastJSON.JSON.Parameters = new JSONParameters { WithoutDynamicMethodsGeneration = withoutDynamic };
+
             Retclass r = new Retclass();
             r.Name = "hello";
             r.Field1 = "dsasdF";
@@ -361,8 +367,10 @@ namespace UnitTests
         }
 
         [Test]
-        public static void StringListTest()
+		public static void StringListTest([Values(true, false)] bool withoutDynamic)
         {
+			fastJSON.JSON.Parameters = new JSONParameters { WithoutDynamicMethodsGeneration = withoutDynamic };
+
             List<string> ls = new List<string>();
             ls.AddRange(new string[] { "a", "b", "c", "d" });
 
@@ -374,8 +382,10 @@ namespace UnitTests
         }
 
         [Test]
-        public static void IntListTest()
+		public static void IntListTest([Values(true, false)] bool withoutDynamic)
         {
+			fastJSON.JSON.Parameters = new JSONParameters { WithoutDynamicMethodsGeneration = withoutDynamic };
+
             List<int> ls = new List<int>();
             ls.AddRange(new int[] { 1, 2, 3, 4, 5, 10 });
 
@@ -388,8 +398,10 @@ namespace UnitTests
         }
 
         [Test]
-        public static void List_int()
+		public static void List_int([Values(true, false)] bool withoutDynamic)
         {
+			fastJSON.JSON.Parameters = new JSONParameters { WithoutDynamicMethodsGeneration = withoutDynamic };
+
             List<int> ls = new List<int>();
             ls.AddRange(new int[] { 1, 2, 3, 4, 5, 10 });
 
@@ -402,8 +414,10 @@ namespace UnitTests
         }
 
         [Test]
-        public static void Variables()
+		public static void Variables([Values(true, false)] bool withoutDynamic)
         {
+			fastJSON.JSON.Parameters = new JSONParameters { WithoutDynamicMethodsGeneration = withoutDynamic };
+
             var s = fastJSON.JSON.ToJSON(42);
             var o = fastJSON.JSON.ToObject(s);
             Assert.AreEqual(o, 42);
@@ -418,8 +432,10 @@ namespace UnitTests
         }
 
         [Test]
-        public static void Dictionary_String_RetClass()
+		public static void Dictionary_String_RetClass([Values(true, false)] bool withoutDynamic)
         {
+			fastJSON.JSON.Parameters = new JSONParameters { WithoutDynamicMethodsGeneration = withoutDynamic };
+
             Dictionary<string, Retclass> r = new Dictionary<string, Retclass>();
             r.Add("11", new Retclass { Field1 = "111", Field2 = 2, date = DateTime.Now });
             r.Add("12", new Retclass { Field1 = "111", Field2 = 2, date = DateTime.Now });
@@ -430,20 +446,27 @@ namespace UnitTests
         }
 
         [Test]
-        public static void Dictionary_String_RetClass_noextensions()
+		public static void Dictionary_String_RetClass_noextensions([Values(true, false)] bool withoutDynamic)
         {
             Dictionary<string, Retclass> r = new Dictionary<string, Retclass>();
             r.Add("11", new Retclass { Field1 = "111", Field2 = 2, date = DateTime.Now });
             r.Add("12", new Retclass { Field1 = "111", Field2 = 2, date = DateTime.Now });
-            var s = fastJSON.JSON.ToJSON(r, new fastJSON.JSONParameters { UseExtensions = false });
+            var s = fastJSON.JSON.ToJSON(r, new fastJSON.JSONParameters 
+			                             { 
+											UseExtensions = false,
+											WithoutDynamicMethodsGeneration = withoutDynamic
+										 });
+
             Console.WriteLine(fastJSON.JSON.Beautify(s));
             var o = fastJSON.JSON.ToObject<Dictionary<string, Retclass>>(s);
             Assert.AreEqual(2, o.Count);
         }
 
         [Test]
-        public static void Dictionary_int_RetClass()
+		public static void Dictionary_int_RetClass([Values(true, false)] bool withoutDynamic)
         {
+			fastJSON.JSON.Parameters = new JSONParameters { WithoutDynamicMethodsGeneration = withoutDynamic };
+
             Dictionary<int, Retclass> r = new Dictionary<int, Retclass>();
             r.Add(11, new Retclass { Field1 = "111", Field2 = 2, date = DateTime.Now });
             r.Add(12, new Retclass { Field1 = "111", Field2 = 2, date = DateTime.Now });
@@ -454,20 +477,27 @@ namespace UnitTests
         }
 
         [Test]
-        public static void Dictionary_int_RetClass_noextensions()
+		public static void Dictionary_int_RetClass_noextensions([Values(true, false)] bool withoutDynamic)
         {
             Dictionary<int, Retclass> r = new Dictionary<int, Retclass>();
             r.Add(11, new Retclass { Field1 = "111", Field2 = 2, date = DateTime.Now });
             r.Add(12, new Retclass { Field1 = "111", Field2 = 2, date = DateTime.Now });
-            var s = fastJSON.JSON.ToJSON(r, new fastJSON.JSONParameters { UseExtensions = false });
+            var s = fastJSON.JSON.ToJSON(r, new fastJSON.JSONParameters 
+			                             { 
+											UseExtensions = false,
+											WithoutDynamicMethodsGeneration = withoutDynamic
+										 });
+
             Console.WriteLine(fastJSON.JSON.Beautify(s));
             var o = fastJSON.JSON.ToObject<Dictionary<int, Retclass>>(s);
             Assert.AreEqual(2, o.Count);
         }
 
         [Test]
-        public static void Dictionary_Retstruct_RetClass()
+		public static void Dictionary_Retstruct_RetClass([Values(true, false)] bool withoutDynamic)
         {
+			fastJSON.JSON.Parameters = new JSONParameters { WithoutDynamicMethodsGeneration = withoutDynamic };
+
             Dictionary<Retstruct, Retclass> r = new Dictionary<Retstruct, Retclass>();
             r.Add(new Retstruct { Field1 = "111", Field2 = 1, date = DateTime.Now }, new Retclass { Field1 = "111", Field2 = 2, date = DateTime.Now });
             r.Add(new Retstruct { Field1 = "222", Field2 = 2, date = DateTime.Now }, new Retclass { Field1 = "111", Field2 = 2, date = DateTime.Now });
@@ -548,7 +578,7 @@ namespace UnitTests
         }
 
         [Test]
-        public static void FillObject()
+		public static void FillObject([Values(true, false)] bool withoutDynamic)
         {
             NoExt ne = new NoExt();
             ne.Name = "hello";
@@ -558,7 +588,13 @@ namespace UnitTests
             ne.dic.Add("hello", new class1("asda", "asdas", Guid.NewGuid()));
             ne.objs = new baseclass[] { new class1("a", "1", Guid.NewGuid()), new class2("b", "2", "desc") };
 
-            string str = fastJSON.JSON.ToJSON(ne, new fastJSON.JSONParameters { UseExtensions = false, UsingGlobalTypes = false });
+            string str = fastJSON.JSON.ToJSON(ne, new fastJSON.JSONParameters 
+			                                  { 
+												UseExtensions = false, 
+												UsingGlobalTypes = false,
+												WithoutDynamicMethodsGeneration = withoutDynamic
+											  });
+
             string strr = fastJSON.JSON.Beautify(str);
             Console.WriteLine(strr);
             object dic = fastJSON.JSON.Parse(str);
@@ -570,10 +606,14 @@ namespace UnitTests
         }
 
         [Test]
-        public static void AnonymousTypes()
+		public static void AnonymousTypes([Values(true, false)] bool withoutDynamic)
         {
             var q = new { Name = "asassa", Address = "asadasd", Age = 12 };
-            string sq = fastJSON.JSON.ToJSON(q, new fastJSON.JSONParameters { EnableAnonymousTypes = true });
+            string sq = fastJSON.JSON.ToJSON(q, new fastJSON.JSONParameters 
+			                                 { 
+												EnableAnonymousTypes = true, 
+												WithoutDynamicMethodsGeneration = withoutDynamic 
+											 });
             Console.WriteLine(sq);
             Assert.AreEqual("{\"Name\":\"asassa\",\"Address\":\"asadasd\",\"Age\":12}", sq);
         }
