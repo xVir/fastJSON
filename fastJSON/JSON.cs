@@ -146,8 +146,6 @@ namespace fastJSON
         {
             param.FixValues();
 
-			Reflection.Instance.SetParameters(param);
-
             Type t = null;
 
             if (obj == null)
@@ -159,7 +157,14 @@ namespace fastJSON
                 param.UsingGlobalTypes = false;
 
             // FEATURE : enable extensions when you can deserialize anon types
-            if (param.EnableAnonymousTypes) { param.UseExtensions = false; param.UsingGlobalTypes = false; }
+            if (param.EnableAnonymousTypes) 
+			{ 
+				param.UseExtensions = false; 
+				param.UsingGlobalTypes = false; 
+			}
+
+			Reflection.Instance.SetParameters(param);
+
             return new JSONSerializer(param).ConvertToJSON(obj);
         }
         /// <summary>
@@ -354,7 +359,6 @@ namespace fastJSON
 
         public object ToObject(string json, Type type)
         {
-            //_params = Parameters;
             _params.FixValues();
             Type t = null;
             if (type != null && type.IsGenericType)
