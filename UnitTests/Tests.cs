@@ -926,6 +926,7 @@ namespace UnitTests
         }
 #endif
 
+#if net4
         [Test]
         public static void DynamicTest()
         {
@@ -955,6 +956,7 @@ namespace UnitTests
             var p = d[5].key;
             Assert.AreEqual(90, p);
         }
+#endif
 
         [Test]
         public static void CommaTests()

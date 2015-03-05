@@ -3,7 +3,7 @@
   <PropertyGroup>
     <ProjectGuid>{6BADD8B3-618E-412A-BBCA-8420EFD5B62E}</ProjectGuid>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
-    <Platform Condition=" '$(Platform)' == '' ">x86</Platform>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <OutputType>Exe</OutputType>
     <RootNamespace>consoletest</RootNamespace>
     <AssemblyName>consoletest</AssemblyName>
