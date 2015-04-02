@@ -4,11 +4,9 @@ using System.Collections.Generic;
 #if !SILVERLIGHT
 using System.Data;
 #endif
+using System.Collections.Specialized;
 using System.Globalization;
 using System.IO;
-using System.Reflection;
-using System.Reflection.Emit;
-using System.Collections.Specialized;
 
 namespace fastJSON
 {

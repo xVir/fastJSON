@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
+#if !IOS
 using System.Reflection.Emit;
+#endif
 using System.Reflection;
 using System.Collections;
 using System.Linq;
@@ -348,16 +350,23 @@ namespace fastJSON
 
 		static CreateObject CreateClassDynamicActivator (Type objtype)
 		{
+			#if IOS
+			throw new NotImplementedException("Dynamic code can't be used on iOS");
+			#else
 			var dynMethod = new DynamicMethod ("_", objtype, null);
 			var ilGen = dynMethod.GetILGenerator ();
 			ilGen.Emit (OpCodes.Newobj, objtype.GetConstructor (Type.EmptyTypes));
 			ilGen.Emit (OpCodes.Ret);
 			var c = (CreateObject)dynMethod.CreateDelegate (typeof(CreateObject));
 			return c;
+			#endif
 		}
 
 		static CreateObject CreateDynamicStructActivator (Type objtype)
 		{
+			#if IOS
+			throw new NotImplementedException("Dynamic code can't be used on iOS");
+			#else
 			var dynMethod = new DynamicMethod ("_", typeof(object), null);
 			var ilGen = dynMethod.GetILGenerator ();
 			var lv = ilGen.DeclareLocal (objtype);
@@ -368,6 +377,7 @@ namespace fastJSON
 			ilGen.Emit (OpCodes.Ret);
 			var c = (CreateObject)dynMethod.CreateDelegate (typeof(CreateObject));
 			return c;
+			#endif
 		}
 
         internal GenericSetter CreateSetField(Type type, FieldInfo fieldInfo)
@@ -388,6 +398,9 @@ namespace fastJSON
 
 		static GenericSetter CreateDynamicSetField(Type type, FieldInfo fieldInfo)
 		{
+			#if IOS
+			throw new NotImplementedException("Dynamic code can't be used on iOS");
+			#else
 			var arguments = new Type[2];
 			arguments [0] = arguments [1] = typeof(object);
 			var dynamicSet = new DynamicMethod ("_", typeof(object), arguments, type);
@@ -419,6 +432,7 @@ namespace fastJSON
 				il.Emit (OpCodes.Ret);
 			}
 			return (GenericSetter)dynamicSet.CreateDelegate (typeof(GenericSetter));
+			#endif
 		}
 
         internal GenericSetter CreateSetMethod(Type type, PropertyInfo propertyInfo)
@@ -445,6 +459,9 @@ namespace fastJSON
 
 		static GenericSetter CreateDynamicSetMethod(Type type, PropertyInfo propertyInfo)
 		{
+			#if IOS
+			throw new NotImplementedException("Dynamic code can't be used on iOS");
+			#else
 			var setMethod = propertyInfo.GetSetMethod();
 
 			var arguments = new Type[2];
@@ -480,6 +497,7 @@ namespace fastJSON
 			}
 			il.Emit (OpCodes.Ret);
 			return (GenericSetter)setter.CreateDelegate (typeof(GenericSetter));
+			#endif
 		}
 
         internal GenericGetter CreateGetField(Type type, FieldInfo fieldInfo)
@@ -496,6 +514,9 @@ namespace fastJSON
 
 		static GenericGetter CreateDynamicGetField (Type type, FieldInfo fieldInfo)
 		{
+			#if IOS
+			throw new NotImplementedException("Dynamic code can't be used on iOS");
+			#else
 			var dynamicGet = new DynamicMethod ("_", typeof(object), new Type[] {
 				typeof(object)
 			}, type);
@@ -519,6 +540,7 @@ namespace fastJSON
 			}
 			il.Emit (OpCodes.Ret);
 			return (GenericGetter)dynamicGet.CreateDelegate (typeof(GenericGetter));
+			#endif
 		}
 
         internal GenericGetter CreateGetMethod(Type type, PropertyInfo propertyInfo)
@@ -541,8 +563,10 @@ namespace fastJSON
 
 		static GenericGetter CreateDynamicGetMethod(Type type, PropertyInfo propertyInfo)
 		{
+			#if IOS
+			throw new NotImplementedException("Dynamic code can't be used on iOS");
+			#else
 			var getMethod = propertyInfo.GetGetMethod();
-
 			DynamicMethod getter = new DynamicMethod ("_", typeof(object), new Type[] {
 				typeof(object)
 			}, type);
@@ -567,6 +591,7 @@ namespace fastJSON
 			}
 			il.Emit (OpCodes.Ret);
 			return (GenericGetter)getter.CreateDelegate (typeof(GenericGetter));
+			#endif
 		}
 
         internal Getters[] GetGetters(Type type, bool ShowReadOnlyProperties, List<Type> IgnoreAttributes)//JSONParameters param)
