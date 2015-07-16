@@ -85,7 +85,6 @@
     <Optimize>true</Optimize>
     <OutputPath>bin\iOS</OutputPath>
     <WarningLevel>4</WarningLevel>
-    <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
     <DebugSymbols>true</DebugSymbols>
     <DefineConstants>IOS</DefineConstants>
   </PropertyGroup>
@@ -104,7 +103,12 @@
     <Compile Include="JsonParser.cs" />
     <Compile Include="Reflection.cs" />
     <Compile Include="SafeDictionary.cs" />
+    <Compile Include="Simulation\JsonSerializerSettings.cs" />
+    <Compile Include="Simulation\JsonConvert.cs" />
+    <Compile Include="Simulation\Formatting.cs" />
+    <Compile Include="Simulation\JsonObjectAttribute.cs" />
     <Compile Include="JsonPropertyAttribute.cs" />
+    <Compile Include="Simulation\NullValueHandling.cs" />
   </ItemGroup>
   <ItemGroup>
     <BootstrapperPackage Include=".NETFramework,Version=v4.0">
@@ -139,4 +143,7 @@
   <Target Name="AfterBuild">
   </Target>
   -->
+  <ItemGroup>
+    <Folder Include="Simulation\" />
+  </ItemGroup>
 </Project>

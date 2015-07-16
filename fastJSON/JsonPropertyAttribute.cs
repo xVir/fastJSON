@@ -1,6 +1,6 @@
 using System;
 
-namespace fastJSON
+namespace Newtonsoft.Json
 {
 	/// <summary>
 	/// Json property attribute.
