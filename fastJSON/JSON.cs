@@ -67,7 +67,7 @@ namespace fastJSON
         /// <summary>
         /// Ignore attributes to check for (default : XmlIgnoreAttribute)
         /// </summary>
-        public List<Type> IgnoreAttributes = new List<Type> { typeof(System.Xml.Serialization.XmlIgnoreAttribute) };
+		public List<Type> IgnoreAttributes = new List<Type> { typeof(System.Xml.Serialization.XmlIgnoreAttribute), typeof(Newtonsoft.Json.JsonIgnoreAttribute) };
         /// <summary>
         /// If you have parametric and no default constructor for you classes (default = False)
         /// 

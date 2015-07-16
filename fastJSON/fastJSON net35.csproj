@@ -109,6 +109,7 @@
     <Compile Include="Simulation\JsonObjectAttribute.cs" />
     <Compile Include="JsonPropertyAttribute.cs" />
     <Compile Include="Simulation\NullValueHandling.cs" />
+    <Compile Include="Simulation\JsonIgnoreAttribute.cs" />
   </ItemGroup>
   <ItemGroup>
     <BootstrapperPackage Include=".NETFramework,Version=v4.0">
