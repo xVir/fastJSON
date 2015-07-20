@@ -4,6 +4,7 @@ solution: consoletest.sln
 branches:
   only:
     - master
+    - unity
 
 install:
   - nuget restore consoletest.sln
