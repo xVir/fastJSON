@@ -178,7 +178,7 @@ namespace consoletest
                 colclass deserializedStore;
                 string jsonText = null;
 
-				stopwatch.Restart();
+				stopwatch.Reset();
                 jsonText = fastJSON.JSON.ToJSON(c);
                 //Console.WriteLine(" size = " + jsonText.Length);
                 for (int i = 0; i < count; i++)
@@ -199,7 +199,7 @@ namespace consoletest
             for (int pp = 0; pp < tcount; pp++)
             {
                 string jsonText = null;
-				stopwatch.Restart();
+                stopwatch.Reset();
                 for (int i = 0; i < count; i++)
                 {
                     jsonText = fastJSON.JSON.ToJSON(c);
@@ -220,7 +220,7 @@ namespace consoletest
                 BinaryFormatter bf = new BinaryFormatter();
                 MemoryStream ms = new MemoryStream();
 				colclass deserializedStore = null;
-				stopwatch.Restart();
+                stopwatch.Reset();
                 bf.Serialize(ms, c);
                 //Console.WriteLine(" size = " +ms.Length);
                 for (int i = 0; i < count; i++)
@@ -244,7 +244,7 @@ namespace consoletest
             {
                 BinaryFormatter bf = new BinaryFormatter();
                 MemoryStream ms = new MemoryStream();
-				stopwatch.Restart();
+                stopwatch.Reset();
                 for (int i = 0; i < count; i++)
                 {
 					stopwatch.Stop(); // we stop then resume the stop watch here so we don't factor in the MemoryStream()'s execution
