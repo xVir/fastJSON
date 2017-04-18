@@ -794,9 +794,18 @@ namespace fastJSON
 
         private object CreateGenericList(List<object> data, Type pt, Type bt, Dictionary<string, object> globalTypes)
         {
-            IList col = (IList)Reflection.Instance.FastCreateInstance(pt);
-            // create an array of objects
-            foreach (object ob in data)
+			IList col;
+			if (typeof(IList).IsAssignableFrom(pt))
+			{
+				col = (IList)Reflection.Instance.FastCreateInstance(pt);
+			}
+			else
+			{
+				col = new List<object>();
+			}
+
+			// create an array of objects
+			foreach (object ob in data)
             {
                 if (ob is IDictionary)
                     col.Add(ParseDictionary((Dictionary<string, object>)ob, globalTypes, bt, null));

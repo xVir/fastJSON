@@ -11,7 +11,7 @@ using System.Data;
 using System.Collections;
 using System.Threading;
 using fastJSON;
-using System.Dynamic;
+
 using System.Collections.Specialized;
 using System.Reflection.Emit;
 using System.Linq.Expressions;
@@ -1719,5 +1719,27 @@ namespace UnitTests
 			Assert.AreEqual("someAnotherValue", loaded.PropertyForRename);
 
 		}
-    }
+
+		[Test]
+		public static void EmptyArrayInDictionary()
+		{
+			var jsonString = @"{""some_param"": []}"" ";
+			var parsed = fastJSON.JSON.ToObject<Dictionary<string, object>>(jsonString);
+
+			Assert.IsNotNull(parsed);
+			Assert.IsNotNull(parsed["some_param"]);
+		}
+
+		[Test]
+		public static void ArrayInDictionary()
+		{
+			var jsonString = @"{""some_param"": [""some value""]}"" ";
+			var parsed = fastJSON.JSON.ToObject<Dictionary<string, object>>(jsonString);
+
+			Assert.IsNotNull(parsed);
+			Assert.IsNotNull(parsed["some_param"]);
+			Assert.AreEqual("some value", ((IList)parsed["some_param"])[0]);
+		}
+
+	}
 }
